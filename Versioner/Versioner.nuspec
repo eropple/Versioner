@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>EdCanHack.Versioner</id>
+    <version>$version$</version>
+    <title>Versioner (Portable)</title>
+    <authors>Ed Ropple</authors>
+    <owners>Ed Ropple</owners>
+    <licenseUrl>https://github.com/eropple/Versioner/blob/master/LICENSE.txt</licenseUrl>
+    <projectUrl>https://github.com/eropple/Versioner</projectUrl>
+    <!--<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>
+        Initial release.
+    </releaseNotes>
+    <copyright>Copyright 2014 Ed Ropple</copyright>
+    <tags>versioning dependency resolution pcl portable</tags>
+    <dependencies>
+    </dependencies>
+  </metadata>
+</package>
