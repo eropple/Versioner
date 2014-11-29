@@ -59,9 +59,44 @@ namespace Versioner.Tests
                 new Dependency("A", "==", Version.Parse("1.0.0")),
             });
 
-            Assert.Throws<Resolver.CircularDependencyException>(
-                () => Resolver.FindTransitiveDependencies(new[] {to1, to2, to3})
-            );
+            try
+            {
+                Resolver.FindTransitiveDependencies(new[] {to1, to2, to3});
+                Assert.Fail("should have thrown CircularDependencyException");
+            }
+            catch (Resolver.CircularDependencyException)
+            {
+            }
+        }
+
+        [Test]
+        public void ComputePriorityOrderWithDependencies()
+        {
+            var a = new TestObject("A", Version.Parse("1.0.0"), new[]
+            {
+                new Dependency("A1", "==", Version.Parse("1.0.0")),
+            });
+            var b = new TestObject("B", Version.Parse("1.0.0"), new[]
+            {
+                new Dependency("B1", "==", Version.Parse("1.0.0")),
+                new Dependency("A2", "==", Version.Parse("1.0.0")), 
+            });
+            var a1 = new TestObject("A1", Version.Parse("1.0.0"), new[]
+            {
+                new Dependency("A2", "==", Version.Parse("1.0.0")),
+            });
+            var a2 = new TestObject("A2", Version.Parse("1.0.0"));
+            var b1 = new TestObject("B1", Version.Parse("1.0.0"));
+
+            var list = Resolver.ComputePriorityOrderWithDependencies(new[] { a, b }, new[] { a1, a2, b1 });
+
+            Assert.IsEmpty(list.GroupBy(x => x)
+                             .Where(g => g.Count() > 1)
+                             .Select(g => g.Key), "duplicate entries found in the resolved list");
+
+            Assert.IsTrue(list.IndexOf(a) < list.IndexOf(b), "a < b");
+            Assert.IsTrue(list.IndexOf(a1) < list.IndexOf(a), "a1 < a");
+            Assert.IsTrue(list.IndexOf(a2) < list.IndexOf(a1), "a2 < a1");
         }
     }
 }

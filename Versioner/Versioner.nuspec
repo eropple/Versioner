@@ -3,7 +3,7 @@
   <metadata>
     <id>EdCanHack.Versioner</id>
     <version>$version$</version>
-    <title>Versioner (Portable)</title>
+    <title>EdCanHack.Versioner (Portable)</title>
     <authors>Ed Ropple</authors>
     <owners>Ed Ropple</owners>
     <licenseUrl>https://github.com/eropple/Versioner/blob/master/LICENSE.txt</licenseUrl>
@@ -12,7 +12,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-        Initial release.
+      Added ComputePriorityOrderWithDependencies, an ordering algorithm suited for the compilation of dependent source modules.
     </releaseNotes>
     <copyright>Copyright 2014 Ed Ropple</copyright>
     <tags>versioning dependency resolution pcl portable</tags>

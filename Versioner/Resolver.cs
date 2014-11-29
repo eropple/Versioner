@@ -77,20 +77,61 @@ namespace Versioner
             return retval;
         }
 
-        private static void HasCircularDependenciesImpl<TVersioned>(TVersioned item,
-                                                                    Dictionary<String, TVersioned> names,
-                                                                    Dictionary<String, Int32> marks)
+        /// <summary>
+        /// Used when determining the order of operations when each item depends upon
+        /// the loading, compilation, etc. of all its dependencies first. The returned
+        /// list will be ordered in the same ordering as `items`, except that dependencies
+        /// within `items` will be moved ahead of the item depending upon them and all
+        /// dependencies from within `availableImplicits` will be inserted ahead of them
+        /// as well.
+        /// </summary>
+        /// <param name="items">
+        /// All required items to be resolved. They, when combined with any dependencies
+        /// referred to within `availableImplicits`, must be a directed acyclic graph,
+        /// otherwise Resolver.CircularDependencyException will be thrown.
+        /// </param>
+        /// <param name="availableImplicits">
+        /// Any additional items that are available. For example, in the case of a software
+        /// package manager, this would include packages not explicitly mentioned; if A
+        /// depends on B, B (and any transitive dependencies of B) must either be in `items`
+        /// or in `availableImplicits`.
+        /// </param>
+        /// <returns>
+        /// A complete set of all values in `items`, plus any values in `availableImplicits`
+        /// referenced by values in `items`.
+        /// </returns>
+        public static IList<TVersioned> ComputePriorityOrderWithDependencies<TVersioned>(IEnumerable<TVersioned> items,
+                                                                                         IEnumerable<TVersioned> availableImplicits = null)
             where TVersioned : IVersioned, IDepending
         {
-            var markValue = marks[item.UniqueName];
-            if (markValue == 1) throw new CircularDependencyException();
-            if (markValue == 2) return;
+            var itemList = items as IList<TVersioned> ?? items.ToList();
+            var allItems = FindTransitiveDependencies(itemList, availableImplicits).ToDictionary(i => i.UniqueName);
+            var usedSet = new HashSet<TVersioned>();
+            var workList = new List<TVersioned>(allItems.Count);
 
-            marks[item.UniqueName] = 1; // mark temporarily
+            foreach (var item in itemList)
+            {
+                ComputePriorityOrderWithDependenciesImpl(item, workList, allItems, usedSet);
+            }
 
-            foreach (var dep in item.Dependencies) HasCircularDependenciesImpl(names[dep.UniqueName], names, marks);
+            return workList;
+        }
 
-            marks[item.UniqueName] = 2;
+        private static void ComputePriorityOrderWithDependenciesImpl<TVersioned>(TVersioned item,
+                                                                                 List<TVersioned> workList,
+                                                                                 Dictionary<String, TVersioned> allItems,
+                                                                                 HashSet<TVersioned> used)
+            where TVersioned : IVersioned, IDepending
+        {
+            if (used.Contains(item)) return;
+            used.Add(item);
+
+            foreach (var dep in item.Dependencies)
+            {
+                ComputePriorityOrderWithDependenciesImpl(allItems[dep.UniqueName], workList, allItems, used);
+            }
+
+            workList.Add(item);
         }
 
         /// <summary>
