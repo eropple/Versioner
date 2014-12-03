@@ -1,16 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace Versioner
 {
+    [JsonObject(MemberSerialization.OptIn)]
     public struct Version : IComparable<Version>, IEquatable<Version>
     {
-        public readonly UInt32 Major;
-        public readonly UInt32 Minor;
-        public readonly UInt32 Patch;
+        [JsonProperty("Major")]
+        public UInt32 Major { get; private set; }
+        [JsonProperty("Minor")]
+        public UInt32 Minor { get; private set; }
+        [JsonProperty("Patch")]
+        public UInt32 Patch { get; private set; }
 
         public Version(UInt32 major, UInt32 minor = 0, UInt32 patch = 0)
             : this()
@@ -113,6 +120,36 @@ namespace Versioner
                 output = new Version();
                 return false;
             }
+        }
+    }
+
+    public class VersionStringConverter : JsonConverter
+    {
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            if (value == null) return;
+
+            var v = (Version) value;
+
+            writer.WriteValue(v.ToString());
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            bool isNullable = Nullable.GetUnderlyingType(objectType) != null;
+            Type t = isNullable ? Nullable.GetUnderlyingType(objectType) : objectType;
+
+            if (reader.TokenType != JsonToken.String)
+            {
+                throw new JsonSerializationException("VersionStringConverter requires a string value.");
+            }
+
+            return Version.Parse(reader.Value.ToString());
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof (Version);
         }
     }
 }

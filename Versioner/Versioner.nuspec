@@ -12,7 +12,9 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      Added ComputePriorityOrderWithDependencies, an ordering algorithm suited for the compilation of dependent source modules.
+      Breaking change - replaced Version and Dependency readonly fields with auto-properties (retaining immutability).
+      
+      Added JSON.NET serialization attributes and converters.
     </releaseNotes>
     <copyright>Copyright 2014 Ed Ropple</copyright>
     <tags>versioning dependency resolution pcl portable</tags>

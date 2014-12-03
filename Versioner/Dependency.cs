@@ -3,20 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace Versioner
 {
     /// <summary>
     /// A single requirement to be provided by an `IDepending`. The composition
-    /// of all Dependencies is used by `Resolver` 
+    /// of all Dependencies is used by `Resolver` to provide ordering and graph
+    /// services to consuming applications.
     /// </summary>
+    [JsonObject(MemberSerialization.OptIn)]
     public class Dependency : IEquatable<Dependency>
     {
 
-
-        public readonly String UniqueName;
-        public readonly String OperatorToken;
-        public readonly Version Version;
+        [JsonProperty("UniqueName")]
+        public String UniqueName { get; private set; }
+        [JsonProperty("Operator")]
+        public String OperatorToken { get; private set; }
+        [JsonProperty("Version")]
+        [JsonConverter(typeof(VersionStringConverter))]
+        public Version Version { get; private set; }
 
         private readonly TestDelegate _testDelegate;
 
@@ -127,6 +133,37 @@ namespace Versioner
                 dep = null;
                 return false;
             }
+        }
+    }
+
+
+    public class DependencyStringConverter : JsonConverter
+    {
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            if (value == null) return;
+
+            var v = (Dependency)value;
+
+            writer.WriteValue(v.ToString());
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            bool isNullable = Nullable.GetUnderlyingType(objectType) != null;
+            Type t = isNullable ? Nullable.GetUnderlyingType(objectType) : objectType;
+
+            if (reader.TokenType != JsonToken.String)
+            {
+                throw new JsonSerializationException("VersionStringConverter requires a string value.");
+            }
+
+            return Dependency.Parse(reader.Value.ToString());
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(Dependency);
         }
     }
 }
